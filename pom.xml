@@ -5,6 +5,7 @@
   <groupId>io.tackle</groupId>
   <artifactId>pathfinder</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+    
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
