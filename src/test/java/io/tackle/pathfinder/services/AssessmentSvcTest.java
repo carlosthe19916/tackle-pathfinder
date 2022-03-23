@@ -1,24 +1,16 @@
 package io.tackle.pathfinder.services;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.security.identity.SecurityIdentity;
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.common.ResourceArg;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
-import io.tackle.commons.testcontainers.PostgreSQLDatabaseTestResource;
+import io.tackle.pathfinder.PathfinderTestProfile;
 import io.tackle.pathfinder.dto.*;
 import io.tackle.pathfinder.mapper.AssessmentMapper;
 import io.tackle.pathfinder.model.QuestionType;
 import io.tackle.pathfinder.model.Risk;
-import io.tackle.pathfinder.model.assessment.Assessment;
-import io.tackle.pathfinder.model.assessment.AssessmentCategory;
-import io.tackle.pathfinder.model.assessment.AssessmentQuestion;
-import io.tackle.pathfinder.model.assessment.AssessmentQuestionnaire;
-import io.tackle.pathfinder.model.assessment.AssessmentSingleOption;
-import io.tackle.pathfinder.model.assessment.AssessmentStakeholder;
-import io.tackle.pathfinder.model.assessment.AssessmentStakeholdergroup;
+import io.tackle.pathfinder.model.assessment.*;
 import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
@@ -32,9 +24,6 @@ import org.mockito.Mockito;
 import javax.inject.Inject;
 import javax.transaction.*;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.SecurityContext;
-
-import java.security.Principal;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
@@ -44,16 +33,11 @@ import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@QuarkusTestResource(value = PostgreSQLDatabaseTestResource.class,
-        initArgs = {
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.DB_NAME, value = "pathfinder_db"),
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.USER, value = "pathfinder"),
-                @ResourceArg(name = PostgreSQLDatabaseTestResource.PASSWORD, value = "pathfinder")
-        }
-)
 @QuarkusTest
+@TestProfile(PathfinderTestProfile.class)
 @Log
 public class AssessmentSvcTest {
     @Inject

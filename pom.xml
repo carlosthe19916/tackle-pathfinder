@@ -22,6 +22,8 @@
     <testcontainers.version>1.16.0</testcontainers.version>
     <keycloak.version>12.0.3</keycloak.version>
     <jacoco.version>0.8.7</jacoco.version>
+
+    <distribution>standalone</distribution>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -161,6 +163,10 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-jwt</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-keycloak-authorization</artifactId>
     </dependency>
     <dependency>
@@ -212,6 +218,7 @@
                 <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                 <maven.home>${maven.home}</maven.home>
                 <keycloak.version>${keycloak.version}</keycloak.version>
+                <pathfinder.distribution.value>${distribution}</pathfinder.distribution.value>
             </systemPropertyVariables>
         </configuration>
     </plugin>
@@ -250,7 +257,7 @@
       </build>
       <properties>
         <quarkus.package.type>native</quarkus.package.type>
-        <quarkus.container-image.tag>${quarkus.application.version:latest}-native</quarkus.container-image.tag>
+        <quarkus.container-image.tag>${quarkus.application.version:latest}-${distribution}-native</quarkus.container-image.tag>
         <quarkus.native.builder-image>quay.io/quarkus/ubi-quarkus-mandrel:21.3-java11</quarkus.native.builder-image>
       </properties>
     </profile>
@@ -312,6 +319,7 @@
               <systemPropertyVariables>
                 <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                 <maven.home>${maven.home}</maven.home>
+                <pathfinder.distribution.value>${distribution}</pathfinder.distribution.value>
               </systemPropertyVariables>
               <environmentVariables>
                 <DOCKER_HOST>unix:///run/user/1000/podman/podman.sock</DOCKER_HOST>

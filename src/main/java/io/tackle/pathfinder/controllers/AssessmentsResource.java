@@ -1,14 +1,13 @@
 package io.tackle.pathfinder.controllers;
 
 import io.tackle.pathfinder.dto.*;
+import io.tackle.pathfinder.security.SecurityIdentityManager;
 import io.tackle.pathfinder.services.AssessmentSvc;
 import lombok.extern.java.Log;
+
 import javax.inject.Inject;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
+import javax.transaction.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -17,8 +16,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.eclipse.microprofile.jwt.JsonWebToken;
-import io.tackle.pathfinder.services.TranslatorSvc;
 
 @Path("/assessments")
 @Log
@@ -27,10 +24,7 @@ public class AssessmentsResource {
   AssessmentSvc assessmentSvc;
 
   @Inject
-  TranslatorSvc translatorSvc;
-
-  @Inject
-  JsonWebToken accessToken;
+  SecurityIdentityManager securityIdentityManager;
 
   @GET
   @Produces("application/json")
@@ -61,7 +55,7 @@ public class AssessmentsResource {
   @Path("{assessmentId}")
   @Produces("application/json")
   public AssessmentDto getAssessment(@NotNull @PathParam("assessmentId") Long assessmentId, @QueryParam("language") String language) {
-    String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
+    String lang = securityIdentityManager.getSecurityIdentityProvider().getLanguage(language);
     return assessmentSvc.getAssessmentDtoByAssessmentId(assessmentId, lang);
   }  
   
@@ -87,7 +81,7 @@ public class AssessmentsResource {
   @Consumes("application/json")
   public List<RiskLineDto> getIdentifiedRisks(@NotNull @Valid List<ApplicationDto> applicationList, @QueryParam("language") String language) {
     if (!applicationList.isEmpty()) {
-      String lang = translatorSvc.getLanguage(accessToken.getRawToken(), language);
+      String lang = securityIdentityManager.getSecurityIdentityProvider().getLanguage(language);
       return assessmentSvc.identifiedRisks(applicationList.stream().map(ApplicationDto::getApplicationId).collect(Collectors.toList()), lang);
     } else {
       throw new BadRequestException();

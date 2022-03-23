@@ -6,9 +6,11 @@ on:
 
 jobs:
   unit-test:
-
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: [ "standalone", "oidc" ]
     steps:
     - uses: actions/checkout@v2.3.5
     - name: Set up JDK 11
@@ -24,12 +26,14 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: ./mvnw -U -B test
+      run: ./mvnw -U -B test -Ddistribution=${{ matrix.distribution }}
 
   integration-native-test:
-
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: [ "standalone", "oidc" ]
     steps:
     - uses: actions/checkout@v2.3.5
     - name: Set up JDK 11
@@ -45,14 +49,17 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: ./mvnw -U -B verify -Pnative -Dquarkus-profile=test
+      run: ./mvnw -U -B verify -Pnative -Dquarkus-profile=test -Ddistribution=${{ matrix.distribution }}
 
   build-jvm-container:
     name: Build and push JVM image
     runs-on: ubuntu-latest
     needs: [unit-test, integration-native-test]
     if: github.repository_owner == 'konveyor'
-
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: [ "standalone", "oidc" ]
     steps:
     - uses: actions/checkout@v2.3.5
     - name: Set up JDK 11
@@ -74,17 +81,22 @@ jobs:
         ./mvnw -U -B package -DskipTests \
           -Dquarkus.container-image.push=true \
           -Dquarkus.container-image.group=${{ github.repository_owner }} \
-          -Dquarkus.container-image.additional-tags=latest-jar \
+          -Dquarkus.container-image.additional-tags=${{ matrix.distribution }}-latest-jar \
           -Dquarkus.container-image.registry=${{ secrets.QUAYIO_REPO }} \
           -Dquarkus.container-image.username=${{ secrets.QUAYIO_USERNAME }} \
-          -Dquarkus.container-image.password=${{ secrets.QUAYIO_PASSWORD }}
+          -Dquarkus.container-image.password=${{ secrets.QUAYIO_PASSWORD }} \          
+          -Dquarkus.profile=${{ matrix.distribution }} \
+          -Ddistribution=${{ matrix.distribution }}
 
   build-native-container:
     name: Build and push native image
     runs-on: ubuntu-latest
     needs: [unit-test, integration-native-test]
     if: github.repository_owner == 'konveyor'
-
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: [ "standalone", "oidc" ]
     steps:
     - uses: actions/checkout@v2.3.5
     - name: Set up JDK 11
@@ -106,10 +118,12 @@ jobs:
         ./mvnw -U -B package -Pnative -DskipTests \
           -Dquarkus.container-image.push=true \
           -Dquarkus.container-image.group=${{ github.repository_owner }} \
-          -Dquarkus.container-image.additional-tags=latest-native \
+          -Dquarkus.container-image.additional-tags=${{ matrix.distribution }}-latest-native \
           -Dquarkus.container-image.registry=${{ secrets.QUAYIO_REPO }} \
           -Dquarkus.container-image.username=${{ secrets.QUAYIO_USERNAME }} \
-          -Dquarkus.container-image.password=${{ secrets.QUAYIO_PASSWORD }}
+          -Dquarkus.container-image.password=${{ secrets.QUAYIO_PASSWORD }} \
+          -Dquarkus.profile=${{ matrix.distribution }} \
+          -Ddistribution=${{ matrix.distribution }}
 
   code-coverage:
     runs-on: ubuntu-latest

@@ -2,7 +2,6 @@ package io.tackle.pathfinder.services;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import io.tackle.pathfinder.dto.*;
-import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
 import io.tackle.pathfinder.dto.AssessmentBulkDto;
@@ -21,6 +20,7 @@ import io.tackle.pathfinder.model.questionnaire.Category;
 import io.tackle.pathfinder.model.questionnaire.Question;
 import io.tackle.pathfinder.model.questionnaire.Questionnaire;
 import io.tackle.pathfinder.model.questionnaire.SingleOption;
+import io.tackle.pathfinder.security.SecurityIdentityManager;
 import lombok.Value;
 import io.tackle.pathfinder.model.bulk.AssessmentBulk;
 import io.vertx.core.eventbus.EventBus;
@@ -90,7 +90,7 @@ public class AssessmentSvc {
     EventBus eventBus;
 
     @Inject
-    SecurityIdentity identityContext;
+    SecurityIdentityManager securityIdentityManager;
 
     @Inject
     UserTransaction transaction;
@@ -256,7 +256,7 @@ public class AssessmentSvc {
                 AssessmentCategory category = AssessmentCategory.find("assessment_questionnaire_id=?1 and id=?2", assessment_questionnaire.id, categ.getId()).<AssessmentCategory>firstResultOptional().orElseThrow(BadRequestException::new);
                 if (categ.getComment() != null) {
                     category.comment = categ.getComment();
-                    category.updateUser = identityContext.getPrincipal().getName();
+                    category.updateUser = securityIdentityManager.getSecurityIdentityProvider().getUsername();
                     log.log(Level.FINE, "Setting category comment : " + category.comment);
                 }
 
@@ -269,7 +269,7 @@ public class AssessmentSvc {
                                 AssessmentSingleOption option = AssessmentSingleOption.find("assessment_question_id=?1 and id=?2", question.id, opt.getId()).<AssessmentSingleOption>firstResultOptional().orElseThrow(BadRequestException::new);
                                 if (opt.getChecked() != null) {
                                     option.selected = opt.getChecked();
-                                    option.updateUser = identityContext.getPrincipal().getName();
+                                    option.updateUser = securityIdentityManager.getSecurityIdentityProvider().getUsername();
                                     log.log(Level.FINE, "Setting option checked : " + option.selected);
                                 }
                             });
@@ -278,7 +278,7 @@ public class AssessmentSvc {
                 }
             });
         }
-        assessment.updateUser = identityContext.getPrincipal().getName();
+        assessment.updateUser = securityIdentityManager.getSecurityIdentityProvider().getUsername();
         return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
     }
 
@@ -287,7 +287,7 @@ public class AssessmentSvc {
         Assessment assessment = AssessmentCreateCommand.builder()
             .applicationId(applicationId)
             .fromAssessmentId(fromAssessmentId)
-            .username(identityContext.getPrincipal().getName())
+            .username(securityIdentityManager.getSecurityIdentityProvider().getUsername())
         .build()
         .execute();
         return assessmentMapper.assessmentToAssessmentHeaderDto(assessment);
@@ -304,7 +304,7 @@ public class AssessmentSvc {
     public AssessmentBulkDto bulkCreateAssessments(Long fromAssessmentId, @NotNull @Valid List<Long> appList) throws NotSupportedException, SystemException, SecurityException, IllegalStateException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
         // We manage manually the transaction to be sure the consumer starts after this transaction has been committed
         transaction.begin();
-        AssessmentBulk bulkNew = bulkSvc.newAssessmentBulk(fromAssessmentId, appList, identityContext.getPrincipal().getName());
+        AssessmentBulk bulkNew = bulkSvc.newAssessmentBulk(fromAssessmentId, appList, securityIdentityManager.getSecurityIdentityProvider().getUsername());
         transaction.commit();
 
         eventBus.send("process-bulk-assessment-creation", bulkNew.id);

@@ -6,9 +6,11 @@ on:
 
 jobs:
   unit-test:
-
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: [ "standalone", "oidc" ]
     steps:
     - uses: actions/checkout@v2.3.5
     - name: Set up JDK 11
@@ -24,12 +26,14 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: ./mvnw -U -B test
+      run: ./mvnw -U -B test -Ddistribution=${{ matrix.distribution }}
 
   integration-native-test:
-
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: [ "standalone", "oidc" ]
     steps:
     - uses: actions/checkout@v2.3.5
     - name: Set up JDK 11
@@ -45,11 +49,10 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: ./mvnw -U -B verify -Pnative -Dquarkus-profile=test
+      run: ./mvnw -U -B verify -Pnative -Dquarkus-profile=test -Ddistribution=${{ matrix.distribution }}
 
   code-coverage:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2.3.5
       - name: Set up JDK 11
