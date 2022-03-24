@@ -27,7 +27,9 @@ jobs:
           -Dquarkus.container-image.name=tackle-pathfinder \
           -Dquarkus.container-image.tag=current-pr \
           -Dquarkus.container-image.build=true \
-          -Dquarkus.native.container-build=true
+          -Dquarkus.native.container-build=true \
+          -Dquarkus.profile=oidc \
+          -Ddistribution=oidc
       - name: Save container image
         run: docker save -o tackle-pathfinder.tar tackle/tackle-pathfinder:current-pr
       - name: Upload container image

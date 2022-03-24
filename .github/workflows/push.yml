@@ -84,7 +84,7 @@ jobs:
           -Dquarkus.container-image.additional-tags=${{ matrix.distribution }}-latest-jar \
           -Dquarkus.container-image.registry=${{ secrets.QUAYIO_REPO }} \
           -Dquarkus.container-image.username=${{ secrets.QUAYIO_USERNAME }} \
-          -Dquarkus.container-image.password=${{ secrets.QUAYIO_PASSWORD }} \          
+          -Dquarkus.container-image.password=${{ secrets.QUAYIO_PASSWORD }} \
           -Dquarkus.profile=${{ matrix.distribution }} \
           -Ddistribution=${{ matrix.distribution }}
 
